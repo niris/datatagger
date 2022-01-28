@@ -101,7 +101,7 @@
 </script>
 <form onsubmit="insert(this, this[type.value]);flush(this); return false;" class=entity style="display:grid">
     <textarea onselect="token(value, this, form)" rows=10 name=text style="resize: vertical;"
-        ondrop="event.preventDefault();Object.assign(new FileReader(), { onload: ({ target }) => value = target.result }).readAsText(event.dataTransfer.files[0])">hello world! how are you ?</textarea>
+        ondrop="event.preventDefault();Object.assign(new FileReader(), { onload: ({ target }) => value = target.result }).readAsText(event.dataTransfer.files[0])">Rugby union, commonly known simply as rugby, is a close-contact team sport that originated in England in the first half of the 19th century. One of the two codes of rugby football, it is based on running with the ball in hand. In its most common form, a game is played between two teams of 15 players each, using an oval-shaped ball on a rectangular field called a pitch. The field has H-shaped goalposts at both ends.</textarea>
 
     <span role=tablist>
         <input name=type onchange='form.className=value' role=tab type=radio value=entity checked title="Entity">
