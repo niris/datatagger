@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang=en>
+<meta charset="utf8">
+<style>
+    input[readonly] {
+        border: none;
+    }
+
+    input,
+    select,
+    button {
+        font-size: 24px;
+        margin: .5em;
+        padding: .5em;
+    }
+
+    /* element hiding according to current form tagMode */
+    form>output[name],
+    form>input[name],
+    form>select[name] {
+        display: none;
+    }
+
+    form.answer .answer[name],
+    form.entity .entity[name],
+    form.relation .relation[name] {
+        display: inherit;
+    }
+
+    [role=tablist] {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+
+    [role=tab] {
+        appearance: none;
+        flex: 1;
+        margin: 0 4px 1em 0;
+        /* avoid too close tab content */
+        cursor: pointer;
+        border-bottom: 3px solid lightgrey;
+        border-radius: 0;
+    }
+
+    [role=tab]:checked {
+        font-weight: bold;
+        border-color: blue;
+    }
+
+    [role=tab]::after {
+        content: attr(title);
+        display: block;
+        text-align: center;
+        padding: .25em;
+    }
+</style>
+<script>
+    const el = (tag, props = {}, ch = []) => ch.reduce((e, c) => (e.appendChild(c), e), Object.assign(document.createElement(tag), props));
+    function token(text, $el, $form) {
+        const isLetter = /[a-zA-Z0-9]/;
+        while ($el.selectionStart > 0 && text[$el.selectionStart - 1].match(isLetter)) $el.selectionStart--;
+        while ($el.selectionEnd < text.length && text[$el.selectionEnd].match(isLetter)) $el.selectionEnd++;
+        $form.elements[$el.selectionDirection + 'Selection'].value = text.slice($el.selectionStart, $el.selectionEnd);
+        $form.elements[$el.selectionDirection + 'Start'].value = $el.selectionStart;
+        $form.elements[$el.selectionDirection + 'End'].value = $el.selectionEnd;
+    }
+    function insert(form, into) {
+        const table = into.querySelector('table');
+        const cols = [...table.tHead.rows[0].cells].map(th => th.dataset.col).filter(Boolean);
+        const tds = cols.map(c => el('td', { innerText: form[c].value }));
+        if (tds.some(td => td.innerText === '')) return alert('Fill all the fields');
+        const actions = el('th', {}, [el('span', { title: 'delete', innerText: "×", style: "cursor:pointer", onclick() { this.closest('tr').remove() } })]);
+        table.tBodies[0].append(el('tr', {}, [actions, ...tds]));
+    }
+    function csv(table) {
+        const lut = {};
+        function uniq(txt, cat) {
+            if (!lut[cat]) lut[cat] = new Set();
+            return [...lut[cat].add(txt).keys()].indexOf(txt);
+        }
+        const needIds = [...table.tHead.rows[0].cells].filter(c => c.dataset.col)
+            .map((cell, i) => cell.dataset.id !== undefined ? i : null).filter(id => id !== null);
+        const rows = [...table.tBodies[0].rows]
+            .map(row => [...row.cells].filter(r => r.tagName == 'TD')
+                .map((cell, i) => needIds.includes(i) ? [cell.innerText, uniq(cell.innerText, i)] : [cell.innerText]).flat()
+            );
+        return rows.map(row => row.join(',')).join('\n');
+    }
+
+    function flush(form){
+        form.forwardSelection.value = "";
+        form.backwardSelection.value="";
+        form.rel.value="";
+        form.entType.value="";
+        form.question.value="";
+        form.pos.value="";
+        form.relType.value="";
+    }
+    const data = (text) => 'data:text/csv;charset=utf-8,' + encodeURIComponent(text);
+</script>
+<form onsubmit="insert(this, this[type.value]);flush(this); return false;" class=entity style="display:grid">
+    <textarea onselect="token(value, this, form)" rows=10 name=text style="resize: vertical;"
+        ondrop="event.preventDefault();Object.assign(new FileReader(), { onload: ({ target }) => value = target.result }).readAsText(event.dataTransfer.files[0])">hello world! how are you ?</textarea>
+
+    <span role=tablist>
+        <input name=type onchange='form.className=value' role=tab type=radio value=entity checked title="Entity">
+        <input name=type onchange='form.className=value' role=tab type=radio value=relation title="Relation">
+        <input name=type onchange='form.className=value' role=tab type=radio value=answer title="QA">
+    </span>
+
+    <input class="relation entity answer" placeholder="Token 1 (↦)" name=forwardSelection readonly type="search">
+    <input class="relation entity answer" placeholder="start" type=hidden name=forwardStart readonly>
+    <input class="relation entity answer" placeholder="end" type=hidden name=forwardEnd readonly>
+
+    <input class="relation" placeholder="Token 2 (↤)" name=backwardSelection readonly>
+    <input class="relation" placeholder="start" type=hidden name=backwardStart readonly>
+    <input class="relation" placeholder="end" type=hidden name=backwardEnd readonly>
+
+    <input class="answer" placeholder="Question" name=question>
+    <select class="entity" placeholder="POS" name=pos>
+        <option>NOUN</option>
+        <option>VERB</option>
+        <option>PRON</option>
+        <option>ADJ</option>
+        <option>ADV</option>
+        <option>AUX</option>
+        <option>PUNCT</option>
+        <option>NUM</option>
+        <option>ADP</option>
+        <option>CCONJ</option>
+        <option>DET</option>
+        <option>INTJ</option>
+        <option>PART</option>
+        <option>PROPN</option>
+        <option>PROPN</option>
+        <option>SCONJ</option>
+    </select>
+    <input class="relation" placeholder="Relationship" name=rel>
+
+    <input class="entity" placeholder="Entity type" name=entType>
+    <select class="relation" name=relType placeholder="Relation type">
+        <option value=direct>Directed</option>
+        <option value=oriented>Non-Directed</option>
+    </select>
+    <button>Save</button>
+
+    <output class=entity name=entity>
+        <table>
+            <thead>
+                <tr>
+                    <th><a download="entity.csv" href="#" onclick="href=data(csv(closest('table')))">csv</a></th>
+                    <th data-col=forwardSelection data-id>token</th>
+                    <th data-col=forwardStart>[</th>
+                    <th data-col=forwardEnd>]</th>
+                    <th data-col=pos>pos</th>
+                    <th data-col=entType>type</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </output>
+    <output class=relation name=relation>
+        <table>
+            <thead>
+                <tr>
+                    <th><a download="relation.csv" href="#" onclick="href=data(csv(closest('table')))">csv</a></th>
+                    <th data-col=forwardSelection data-id>token 1</th>
+                    <th data-col=forwardStart>[</th>
+                    <th data-col=forwardEnd>]</th>
+                    <th data-col=backwardSelection data-id>token 2</th>
+                    <th data-col=backwardStart>[</th>
+                    <th data-col=backwardEnd>]</th>
+                    <th data-col=rel data-id>relation</th>
+                    <th data-col=relType>type</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </output>
+    <output class=answer name=answer>
+        <table>
+            <thead>
+                <tr>
+                    <th><a download="answer.csv" href="#" onclick="href=data(csv(closest('table')))">csv</a></th>
+                    <th data-col=question data-id>Question</th>
+                    <th data-col=forwardSelection data-id>Answer</th>
+                    <th data-col=forwardStart>[</th>
+                    <th data-col=forwardEnd>]</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </output>
+</form>
