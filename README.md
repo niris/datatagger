@@ -1,3 +1,3 @@
 # dataTagger
 
-A simple webinterface for tagging tokens from a given text 
+A simple web interface for tagging tokens from a given text 
