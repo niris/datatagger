@@ -1,12 +1,15 @@
 <!doctype html>
 <html lang=en>
 <meta charset="utf8">
+<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 <style>
+    textarea:read-only,
     input[readonly] {
-        border: none;
+        opacity: .6;
     }
 
     input,
+    textarea,
     select,
     button {
         font-size: 24px;
@@ -58,9 +61,6 @@
 <script>
     const el = (tag, props = {}, ch = []) => ch.reduce((e, c) => (e.appendChild(c), e), Object.assign(document.createElement(tag), props));
     function token(text, $el, $form) {
-        const isLetter = /[a-zA-Z0-9]/;
-        while ($el.selectionStart > 0 && text[$el.selectionStart - 1].match(isLetter)) $el.selectionStart--;
-        while ($el.selectionEnd < text.length && text[$el.selectionEnd].match(isLetter)) $el.selectionEnd++;
         $form.elements[$el.selectionDirection + 'Selection'].value = text.slice($el.selectionStart, $el.selectionEnd);
         $form.elements[$el.selectionDirection + 'Start'].value = $el.selectionStart;
         $form.elements[$el.selectionDirection + 'End'].value = $el.selectionEnd;
@@ -72,6 +72,7 @@
         if (tds.some(td => td.innerText === '')) return alert('Fill all the fields');
         const actions = el('th', {}, [el('span', { title: 'delete', innerText: "×", style: "cursor:pointer", onclick() { this.closest('tr').remove() } })]);
         table.tBodies[0].append(el('tr', {}, [actions, ...tds]));
+        flush(form);
     }
     function csv(table) {
         const lut = {};
@@ -98,10 +99,18 @@
         form.relType.value="";
     }
     const data = (text) => 'data:text/csv;charset=utf-8,' + encodeURIComponent(text);
+    const plain = (text) => 'data:text/plain;charset=utf-8,' + encodeURIComponent(text);
+    const qhash = (text) => text.split('').reduce((sum,c) => Math.abs(((sum<<5) - sum + c.charCodeAt(0))|0), 0);
 </script>
-<form onsubmit="insert(this, this[type.value]);flush(this); return false;" class=entity style="display:grid">
-    <textarea onselect="token(value, this, form)" rows=10 name=text style="resize: vertical;"
-        ondrop="event.preventDefault();Object.assign(new FileReader(), { onload: ({ target }) => value = target.result }).readAsText(event.dataTransfer.files[0])">Rugby union, commonly known simply as rugby, is a close-contact team sport that originated in England in the first half of the 19th century. One of the two codes of rugby football, it is based on running with the ball in hand. In its most common form, a game is played between two teams of 15 players each, using an oval-shaped ball on a rectangular field called a pitch. The field has H-shaped goalposts at both ends.</textarea>
+<form onsubmit="insert(this, this[type.value]);return false;" class=entity style="display:grid">
+    <button type="button" title="Your text and your tag will be lost" onclick="if(!confirm(title))return;form.text.readOnly=false;form.reset();document.querySelectorAll('table tbody').forEach(body=>body.innerHTML='')">New text</button>
+    <textarea name=text onselect="token(value, this, form)" rows=7 style="resize: vertical;"
+        ondrop="event.preventDefault();Object.assign(new FileReader(), { onload: ({ target }) => {value = target.result;dispatchEvent(new Event('change'))} }).readAsText(event.dataTransfer.files[0])"
+        placeholder="Paste or drop your text here" onchange="form.texthash.value=qhash(form.text.value);readOnly=true"></textarea>
+    <input name=texthash>
+    <div style="text-align: center;">
+        <a download="dataset.txt" href="#" onclick="const f=closest('form');download=(f.texthash.value) + '.txt';href=plain(f.text.value)">download .txt</a>
+    </div>
 
     <span role=tablist>
         <input name=type onchange='form.className=value' role=tab type=radio value=entity checked title="Entity">
@@ -118,6 +127,7 @@
     <input class="relation" placeholder="end" type=hidden name=backwardEnd readonly>
 
     <input class="answer" placeholder="Question" name=question>
+
     <select class="entity" placeholder="POS" name=pos>
         <option>NOUN</option>
         <option>VERB</option>
@@ -136,20 +146,69 @@
         <option>PROPN</option>
         <option>SCONJ</option>
     </select>
-    <input class="relation" placeholder="Relationship" name=rel>
 
-    <input class="entity" placeholder="Entity type" name=entType>
+    <input class="relation" list="relations" placeholder="Relationship" name="rel" id="relation">
+        <datalist id="relations">
+            <option value="is">เป็น/คือ</option>
+            <option value="have">มี</option>
+            <option value="do">ทำ</option>
+            <option value="go">ไป</option>
+            <option value="located in">ตั้งอยู่</option>
+            <option value="include">ประกอบด้วย</option>
+            <option value="made of">ทำขึ้นจาก</option>
+            <option value="work in">ทำงาน</option>
+            <option value="position">ทำงานตำแหน่ง</option>
+            <option value="invent">คิดค้น</option>
+            <option value="visit">เยี่ยม เดินทางไป</option>
+            <option value="establish">ก่อตั้ง</option>
+            <option value="live">อาศัยอยู่ที่</option>
+            <option value="born">เกิด</option>
+            <option value="sibling">พี่น้อง</option>
+            <option value="parent">ผู้ปกครอง</option>
+            <option value="child">ลูก</option>
+            <option value="spouse">สามีภรรยา</option>
+            <option value="grandparent">ปู่ย่าตายาย</option>
+            <option value="grandchild">หลาน</option>
+            <option value="advisor">ที่ปรึกษา</option>
+            <option value="friend">เพื่อน</option>
+            <option value="colleague">เพื่อนร่วมงาน</option>
+            <option value="classmate">เพื่อนร่วมชั้น</option>
+            <option value="weight">หนัก</option>
+            <option value="height">สูง</option>
+            <option value="dimension">ขนาด</option>
+            <option value="distance">ระยะทาง</option>
+        </datalist>
+
+    <select class="entity" placeholder="Entity type" name=entType>
+        <option value="object">วัตถุ</option>
+        <option value="person">บุคคล</option>
+        <option value="position">ตำแหน่ง</option>
+        <option value="location">สถานที่</option>
+        <option value="organization">หน่วยงาน</option>
+        <option value="len">หน่วยนับ</option>
+        <option value="law">กฎหมาย</option>
+        <option value="url">URL</option>
+        <option value="phone">โทรศัพท์</option>
+        <option value="email">อีเมล</option>
+        <option value="money">จำนวนเงิน</option>
+        <option value="year">ปี</option>
+        <option value="date">วันที่</option>
+        <option value="time">เวลา</option>
+        <option value="period">ยุค/ช่วงเวลา</option>
+    </select>
+
     <select class="relation" name=relType placeholder="Relation type">
         <option value=direct>Directed</option>
         <option value=oriented>Non-Directed</option>
     </select>
-    <button>Save</button>
+    <button>Tag</button>
 
     <output class=entity name=entity>
         <table>
             <thead>
                 <tr>
                     <th><a download="entity.csv" href="#" onclick="href=data(csv(closest('table')))">csv</a></th>
+                    <th data-col=texthash>text id</th>
                     <th data-col=forwardSelection data-id>token</th>
                     <th data-col=forwardStart>[</th>
                     <th data-col=forwardEnd>]</th>
@@ -165,6 +224,7 @@
             <thead>
                 <tr>
                     <th><a download="relation.csv" href="#" onclick="href=data(csv(closest('table')))">csv</a></th>
+                    <th data-col=texthash>text id</th>
                     <th data-col=forwardSelection data-id>token 1</th>
                     <th data-col=forwardStart>[</th>
                     <th data-col=forwardEnd>]</th>
@@ -183,6 +243,7 @@
             <thead>
                 <tr>
                     <th><a download="answer.csv" href="#" onclick="href=data(csv(closest('table')))">csv</a></th>
+                    <th data-col=texthash>text id</th>
                     <th data-col=question data-id>Question</th>
                     <th data-col=forwardSelection data-id>Answer</th>
                     <th data-col=forwardStart>[</th>
