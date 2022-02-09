@@ -217,7 +217,7 @@
         <table>
             <thead>
                 <tr>
-                    <th><a download="entity.csv" href="#" onclick="href=data(csv(closest('table')))">csv</a></th>
+                    <th><a download="entity.csv" href="#" onclick="const f=closest('form');download='entity_' + (f.texthash.value) + '.csv'; href=data(csv(closest('table')))">csv</a></th>
                     <th data-col=texthash>text id</th>
                     <th data-col=forwardSelection data-id>token</th>
                     <th data-col=forwardStart>[</th>
@@ -233,7 +233,7 @@
         <table>
             <thead>
                 <tr>
-                    <th><a download="relation.csv" href="#" onclick="href=data(csv(closest('table')))">csv</a></th>
+                    <th><a download="relation.csv" href="#" onclick="const f=closest('form');download='rel_' + (f.texthash.value) + '.csv'; href=data(csv(closest('table')))">csv</a></th>
                     <th data-col=texthash>text id</th>
                     <th data-col=forwardSelection data-id>token 1</th>
                     <th data-col=forwardStart>[</th>
@@ -252,7 +252,7 @@
         <table>
             <thead>
                 <tr>
-                    <th><a download="answer.csv" href="#" onclick="href=data(csv(closest('table')))">csv</a></th>
+                    <th><a download="qa.csv" href="#" onclick="const f=closest('form');download='qa_' + (f.texthash.value) + '.csv'; href=data(csv(closest('table')))">csv</a></th>
                     <th data-col=texthash>text id</th>
                     <th data-col=question data-id>Question</th>
                     <th data-col=forwardSelection data-id>Answer</th>
