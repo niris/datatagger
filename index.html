@@ -94,6 +94,7 @@
         form.backwardSelection.value="";
         form.rel.value="";
         form.entType.value="";
+        form.iob.value-"";
         form.question.value="";
         form.pos.value="";
         form.relType.value="";
@@ -190,6 +191,7 @@
     <select class="entity" placeholder="Entity type" name=entType>
         <option value="object">วัตถุ</option>
         <option value="abstract">นามธรรม</option>
+        <option value="topic">หัวข้อ</option>
         <option value="person">บุคคล</option>
         <option value="group">กลุ่มบุคล</option>
         <option value="post">ตำแหน่งบุคคล</option>
@@ -216,6 +218,12 @@
         <option value="none">ไม่ระบุ</option>
     </select>
 
+    <select class="entity" placeholder="IOB2" name=iob>
+        <option value="b">Begining</option>
+        <option value="i">Inside</option>
+        <option value="o">Outside</option>
+    </select>
+
     <select class="relation" name=relType placeholder="Relation type">
         <option value=direct>Directed</option>
         <option value=undirected>Undirected</option>
@@ -233,6 +241,7 @@
                     <th data-col=forwardEnd>]</th>
                     <th data-col=pos>pos</th>
                     <th data-col=entType>type</th>
+                    <th data-col=iob>iob</th>
                 </tr>
             </thead>
             <tbody></tbody>
