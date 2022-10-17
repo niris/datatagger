@@ -1,2 +1,2 @@
-# Chatbot as a virtual teaching assistant for enhancing personlized learning by appliying auto-generated knowledge graph
-- Work in progress
+# DataTagger
+A simple web interface for tagging tokens within a given paragraph
