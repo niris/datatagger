@@ -1,3 +1,2 @@
-# dataTagger
-
-A simple web interface for tagging tokens from a given text 
+# Chatbot as a virtual teaching assistant for enhancing personlized learning by appliying auto-generated knowledge graph
+- Work in progress
